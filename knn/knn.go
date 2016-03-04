@@ -1,7 +1,7 @@
 package knn
 
 import (
-    // "fmt"
+    "fmt"
     "errors"
     "math"
     "sort"
@@ -76,4 +76,35 @@ func vote(labels []string, diff DiffArray, k int) string {
     }
 
     return res
+}
+
+func NormalizeData(dataSet [][]float64) ([][]float64, []float64, []float64) {
+    fmt.Println(dataSet)
+    normalizedArray := make([][]float64, len(dataSet))
+    rows := len(dataSet)
+    cols := len(dataSet[0])
+
+    mins  := make([]float64, cols)
+    maxes := make([]float64, cols)
+
+    for i := 0; i < cols; i++ {
+        mins[i] = dataSet[0][i]
+        maxes[i] = dataSet[0][i]
+    }
+
+    for i := 0; i < rows; i++ {
+        for j := 0; j < cols; j++ {
+            if mins[j] > dataSet[i][j] {
+                mins[j] = dataSet[i][j]
+            }
+            if maxes[j] < dataSet[i][j] {
+                maxes[j] = dataSet[i][j]
+            }
+        }
+    }
+
+    fmt.Println(mins)
+    fmt.Println(maxes)
+
+    return normalizedArray, mins, maxes;
 }
