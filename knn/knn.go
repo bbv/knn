@@ -1,57 +1,41 @@
 package knn
 
 import (
-    "fmt"
+    // "fmt"
     "errors"
     "math"
     "sort"
 )
 
-type DiffArray struct {
-    Values []float64
-    Indices []int
+type KnnClassifier struct {
+    dataSet, normalizedDataSet [][]float64
+    mins, maxes []float64
+    labels  []string
 }
 
-func NewDiffArray(len int) DiffArray {
-    da := DiffArray{
-        make([]float64, len),
-        make([]int, len),
-    }
-    for i := 0; i < len; i++ {
-        da.Indices[i] = i;
-    }
-    return da
+func New(dataSet [][]float64, labels []string) KnnClassifier {
+    kn := KnnClassifier{dataSet: dataSet, labels: labels}
+    kn.calcMinMax()
+    kn.normalizeData()
+    return kn
 }
 
-func (da DiffArray) Len() int {
-    return len(da.Values)
-}
-
-func (da DiffArray) Less(i, j int) bool {
-    return da.Values[i] < da.Values[j]
-}
-
-func (da DiffArray) Swap(i, j int) {
-    da.Values[i], da.Values[j] = da.Values[j], da.Values[i]
-    da.Indices[i], da.Indices[j] = da.Indices[j], da.Indices[i]
-}
-
-func Classify( inX []float64, dataSet [][]float64, labels []string, k int ) (string, error) {
-    if len(dataSet) == 0 {
+func ( kn *KnnClassifier ) Classify( inX []float64, k int ) (string, error) {
+    if len(kn.dataSet) == 0 {
         return "", errors.New("Empty data set")
     }
-    diff := calcDiff(inX, dataSet)
+    diff := calcDiff(kn.normalizeInput(inX), kn.normalizedDataSet)
     sort.Sort(diff)
     // fmt.Println(diff)
 
-    return vote(labels, diff, k), nil
+    return kn.vote(diff, k), nil
 }
 
 func calcDiff(inX []float64, dataSet [][]float64) DiffArray{
     res := NewDiffArray(len(dataSet))
     // fmt.Println(res)
     for i, row := range dataSet {
-        // fmt.Printf("%#v %d", row, i)
+        // fmt.Printf("row: %#v %d\n", row, i)
         for j := 0; j < len(inX); j++ {
             res.Values[i] += math.Pow(inX[j]*inX[j] - row[j]*row[j], 2)
         }
@@ -60,10 +44,10 @@ func calcDiff(inX []float64, dataSet [][]float64) DiffArray{
     return res
 }
 
-func vote(labels []string, diff DiffArray, k int) string {
+func ( kn KnnClassifier ) vote(diff DiffArray, k int) string {
     m := make(map[string]int)
     for i := 0; i < int(math.Min( float64(len(diff.Values)), float64(k)) ); i++ {
-        m[labels[diff.Indices[i]]] += 1
+        m[kn.labels[diff.Indices[i]]] += 1
     }
 
     var max int
@@ -78,41 +62,52 @@ func vote(labels []string, diff DiffArray, k int) string {
     return res
 }
 
-func NormalizeData(dataSet [][]float64) ([][]float64, []float64, []float64) {
-    fmt.Println(dataSet)
-    normalizedArray := make([][]float64, len(dataSet))
-    rows := len(dataSet)
-    cols := len(dataSet[0])
+func ( kn *KnnClassifier ) normalizeData() {
+    // fmt.Println(kn.dataSet)
+    kn.normalizedDataSet = make([][]float64, len(kn.dataSet))
+    rows := len(kn.dataSet)
+    cols := len(kn.dataSet[0])
 
-    mins  := make([]float64, cols)
-    maxes := make([]float64, cols)
+    // fmt.Println(kn.mins)
+    // fmt.Println(kn.maxes)
+    for i := 0; i < rows; i++ {
+        kn.normalizedDataSet[i] = make([]float64, cols)
+        for j := 0; j < cols; j++ {
+            if (kn.mins[j] != kn.maxes[j]) {
+                kn.normalizedDataSet[i][j] = (kn.dataSet[i][j] - kn.mins[j]) / (kn.maxes[j] - kn.mins[j])
+            }
+        }
+    }
+}
+
+func (kn *KnnClassifier) normalizeInput(inX []float64) []float64 {
+    res := make([]float64, len(inX))
+    for i := 0; i < len(inX); i++ {
+        res[i] = (inX[i] - kn.mins[i])/(kn.maxes[i] - kn.mins[i])
+    }
+    return res
+}
+
+func ( kn *KnnClassifier ) calcMinMax() {
+    rows := len(kn.dataSet)
+    cols := len(kn.dataSet[0])
+
+    kn.mins  = make([]float64, cols)
+    kn.maxes = make([]float64, cols)
 
     for i := 0; i < cols; i++ {
-        mins[i] = dataSet[0][i]
-        maxes[i] = dataSet[0][i]
+        kn.mins[i] = kn.dataSet[0][i]
+        kn.maxes[i] = kn.dataSet[0][i]
     }
 
     for i := 0; i < rows; i++ {
         for j := 0; j < cols; j++ {
-            if mins[j] > dataSet[i][j] {
-                mins[j] = dataSet[i][j]
+            if kn.mins[j] > kn.dataSet[i][j] {
+                kn.mins[j] = kn.dataSet[i][j]
             }
-            if maxes[j] < dataSet[i][j] {
-                maxes[j] = dataSet[i][j]
-            }
-        }
-    }
-
-    fmt.Println(mins)
-    fmt.Println(maxes)
-    for i := 0; i < rows; i++ {
-        normalizedArray[i] = make([]float64, cols)
-        for j := 0; j < cols; j++ {
-            if (mins[j] != maxes[j]) {
-                normalizedArray[i][j] = (dataSet[i][j] - mins[j]) / (maxes[j] - mins[j])
+            if kn.maxes[j] < kn.dataSet[i][j] {
+                kn.maxes[j] = kn.dataSet[i][j]
             }
         }
     }
-
-    return normalizedArray, mins, maxes;
 }
