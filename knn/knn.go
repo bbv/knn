@@ -105,6 +105,14 @@ func NormalizeData(dataSet [][]float64) ([][]float64, []float64, []float64) {
 
     fmt.Println(mins)
     fmt.Println(maxes)
+    for i := 0; i < rows; i++ {
+        normalizedArray[i] = make([]float64, cols)
+        for j := 0; j < cols; j++ {
+            if (mins[j] != maxes[j]) {
+                normalizedArray[i][j] = (dataSet[i][j] - mins[j]) / (maxes[j] - mins[j])
+            }
+        }
+    }
 
     return normalizedArray, mins, maxes;
 }
