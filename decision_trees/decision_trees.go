@@ -20,3 +20,14 @@ func CalcShannonEntropy(dataSet [][]int) float64 {
     }
     return shannonEnt
 }
+
+func SplitDataSet(dataSet [][]int, axis int, value int) [][]int {
+    var retDataSet [][]int
+    for _, featureVector := range dataSet {
+        if featureVector[axis] == value {
+            reducedFeatVector := append(featureVector[:axis], featureVector[axis+1:]...)
+            retDataSet = append(retDataSet, reducedFeatVector)
+        }
+    }
+    return retDataSet
+}
