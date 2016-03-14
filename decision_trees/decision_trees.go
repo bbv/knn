@@ -1,7 +1,7 @@
 package decisionTrees
 
 import (
-    // "fmt"
+    "fmt"
     "math"
 )
 
@@ -23,6 +23,7 @@ func CalcShannonEntropy(dataSet [][]int) float64 {
 
 func SplitDataSet(dataSet [][]int, axis int, value int) [][]int {
     var retDataSet [][]int
+    fmt.Println("splitting: ", dataSet)
     for _, featureVector := range dataSet {
         if featureVector[axis] == value {
             reducedFeatVector := append(featureVector[:axis], featureVector[axis+1:]...)
@@ -30,4 +31,36 @@ func SplitDataSet(dataSet [][]int, axis int, value int) [][]int {
         }
     }
     return retDataSet
+}
+
+func ChooseBestFeatureToSplit(dataSet [][]int) int {
+    fmt.Println(dataSet)
+    numFeatures := len(dataSet[0]) - 1
+    baseEntropy := CalcShannonEntropy(dataSet)
+    fmt.Println("base entropy: ", baseEntropy)
+    bestInfoGain := 0.0
+    bestFeature := -1
+
+    for i := 0; i < numFeatures; i++ {
+        featList := make(map[int]bool)
+        for row := 0; row < len(dataSet); row++ {
+            featList[dataSet[row][i]] = true
+        }
+        newEntropy := 0.0
+        for value := range featList {
+            subDataSet := SplitDataSet(dataSet, i, value)
+            fmt.Println(i," ", value," ", subDataSet)
+            prob := float64(len(subDataSet)) / float64(len(dataSet))
+            newEntropy += prob * CalcShannonEntropy(subDataSet)
+            // fmt.Println(newEntropy)
+        }
+
+        infoGain := baseEntropy - newEntropy
+        // fmt.Println(i, ": ", newEntropy)
+        if infoGain > bestInfoGain {
+            bestInfoGain = infoGain
+            bestFeature = i
+        }
+    }
+    return bestFeature
 }
