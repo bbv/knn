@@ -69,3 +69,27 @@ func ChooseBestFeatureToSplit(dataSet [][]int) int {
     }
     return bestFeature
 }
+
+func MajorityCnt(classList []int) int {
+    classCnt := make(map[int]int)
+
+    for _, v := range classList {
+        classCnt[v] += 1
+    }
+    maxV := -1
+    for v := range classCnt {
+        if classCnt[v] >= maxV {
+            maxV = v
+        }
+    }
+    return maxV
+}
+
+type Tree struct {
+    subTrees map[int]Tree
+    value int
+}
+
+func CreateTree(dataSet [][]int, labels []string) {
+
+}
