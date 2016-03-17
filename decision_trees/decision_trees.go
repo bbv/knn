@@ -18,18 +18,23 @@ func CalcShannonEntropy(dataSet [][]int) float64 {
         prob := float64(count) / float64(numEntries)
         shannonEnt -= prob * math.Log2(prob)
     }
+    // fmt.Println("Entropy: ", shannonEnt, "; dataSet: ", dataSet)
     return shannonEnt
 }
 
 func SplitDataSet(dataSet [][]int, axis int, value int) [][]int {
     var retDataSet [][]int
-    fmt.Println("splitting: ", dataSet)
+    // fmt.Println("splitting: ", dataSet)
     for _, featureVector := range dataSet {
         if featureVector[axis] == value {
-            reducedFeatVector := append(featureVector[:axis], featureVector[axis+1:]...)
+            reducedFeatVector := make([]int, len(featureVector) - 1)
+            copy(reducedFeatVector, featureVector[:axis])
+            copy(reducedFeatVector[axis:], featureVector[axis+1:])
             retDataSet = append(retDataSet, reducedFeatVector)
         }
     }
+    // fmt.Println("splitting result: ", retDataSet)
+    // fmt.Println("splitting source: ", dataSet)
     return retDataSet
 }
 
@@ -49,15 +54,15 @@ func ChooseBestFeatureToSplit(dataSet [][]int) int {
         newEntropy := 0.0
         for value := range featList {
             subDataSet := SplitDataSet(dataSet, i, value)
-            fmt.Println(i," ", value," ", subDataSet)
+            // fmt.Println(i," ", value," ", subDataSet)
             prob := float64(len(subDataSet)) / float64(len(dataSet))
             newEntropy += prob * CalcShannonEntropy(subDataSet)
             // fmt.Println(newEntropy)
         }
 
         infoGain := baseEntropy - newEntropy
-        // fmt.Println(i, ": ", newEntropy)
-        if infoGain > bestInfoGain {
+        fmt.Println(i, ": ", infoGain)
+        if infoGain >= bestInfoGain {
             bestInfoGain = infoGain
             bestFeature = i
         }
