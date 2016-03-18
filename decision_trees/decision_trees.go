@@ -85,11 +85,6 @@ func MajorityCnt(classList []int) int {
     return maxV
 }
 
-type Tree struct {
-    subTrees map[int]Tree
-    value int
-}
-
-func CreateTree(dataSet [][]int, labels []string) {
+func CreateTree(dataSet [][]int, labels []string, valueLabels map[string]int) {
 
 }
