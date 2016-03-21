@@ -1,4 +1,4 @@
-package decisionTrees
+package decisionTree
 
 import (
     "fmt"
@@ -85,6 +85,8 @@ func MajorityCnt(classList []int) int {
     return maxV
 }
 
-func CreateTree(dataSet [][]int, labels []string, valueLabels map[string]int) {
-
+func CreateTree(dataSet [][]int, labels []string, valueLabels []map[string]int) Tree {
+    // bestFeature := ChooseBestFeatureToSplit(dataSet)
+    tree := NewTree()
+    return tree
 }
