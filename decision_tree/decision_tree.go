@@ -85,8 +85,40 @@ func MajorityCnt(classList []int) int {
     return maxV
 }
 
-func CreateTree(dataSet [][]int, labels []string, valueLabels []map[string]int) Tree {
+func CreateTree(dataSet [][]int, labels []string, valueLabels [][]string) Tree {
     // bestFeature := ChooseBestFeatureToSplit(dataSet)
+    valuesColIndex := len(valueLabels) - 1
+
     tree := NewTree()
+    classList := make([]int, len(dataSet))
+    for i, v := range dataSet {
+        classList[i] = v[len(v)-1]
+    }
+    if len(dataSet[0]) == 1 {
+        tree.Label = valueLabels[valuesColIndex][MajorityCnt(classList)]
+        return tree
+    }
+
+    bestFeature := ChooseBestFeatureToSplit(dataSet)
+    bestFeatLabel := labels[bestFeature]
+    uniqueFeatures := make(map[int]int)
+    for _, v := range dataSet {
+        uniqueFeatures[v[bestFeature]] += 1
+    }
+    for value := range uniqueFeatures {
+        subLabels := make([]string, len(labels)-1)
+        copy(subLabels, labels[:bestFeature])
+        copy(subLabels, labels[bestFeature+1:])
+
+        subValueLabels := make([][]string, len(valueLabels)-1)
+        copy(subValueLabels, valueLabels[:bestFeature])
+        copy(subValueLabels, valueLabels[bestFeature+1:])
+
+        subDataSet := SplitDataSet(dataSet, bestFeature, value)
+        tree.Feature = bestFeatLabel
+        tree.SubTrees[valueLabels[bestFeature][value]] = CreateTree(subDataSet, subLabels, subValueLabels)
+    }
+
+
     return tree
 }
