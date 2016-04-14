@@ -3,6 +3,8 @@ package bayes
 import (
     "fmt"
     "regexp"
+    "encoding/json"
+    "io/ioutil"
 )
 
 type WordStat struct {
@@ -28,6 +30,11 @@ func NewBayesClassifier(name string) BayesClassifier {
 
 func (b *BayesClassifier) Learn(text string, good bool) {
     b.DocNumber += 1
+    if good {
+        b.DocFrequency = (float64(b.DocNumber - 1) * b.DocFrequency + 1.0) / float64(b.DocNumber)
+    } else {
+        b.DocFrequency = (float64(b.DocNumber - 1) * b.DocFrequency) / float64(b.DocNumber)
+    }
 
     words := filterWords(splitText(text))
     uniqueWords := make(map[string]int)
@@ -68,4 +75,33 @@ func filterWords(words []string) []string {
         }
     }
     return res
+}
+
+func (b *BayesClassifier) ToJSON() ([]byte, error) {
+    return json.MarshalIndent(b, "", "    ")
+}
+
+func (b *BayesClassifier) Save( path string ) error {
+    str, err := b.ToJSON()
+    fmt.Println(string(str), err)
+    if err != nil {
+        return err
+    }
+
+    err = ioutil.WriteFile( b.filename(path), str, 0666 )
+    return err
+}
+
+func (b *BayesClassifier) filename(path string) string {
+    return path + "/" + b.Name + ".json"
+}
+
+func Load( filename string ) (BayesClassifier, error) {
+    var b BayesClassifier
+    str, err := ioutil.ReadFile(filename)
+    if err != nil {
+        return b, err
+    }
+    err = json.Unmarshal(str, &b)
+    return b, err
 }
