@@ -3,11 +3,22 @@ package bayes
 import (
     "fmt"
     "regexp"
+    "math"
 )
+
+const defaultThreshold = 3
+const defaultProb = 0.5
 
 type WordStat struct {
     Prob float64
     Occurrencies int
+}
+
+func (ws WordStat) CorrectedProb() float64 {
+    if ws.Occurrencies < defaultThreshold {
+        return defaultProb
+    }
+    return ws.Prob
 }
 
 type WordsMap map[string]WordStat
@@ -42,12 +53,14 @@ func (b *BayesClassifier) Learn(text string, good bool) {
     for word := range uniqueWords {
         fmt.Println(word)
         wordStat, ok := b.Words[word]
-        fmt.Println(wordStat)
         if !ok {
+            fmt.Println("Creating stats for word: ", word)
             b.Words[word] = wordStat
         }
-        wordStat.Occurrencies += 1
-        wordStat.Prob = float64(wordStat.Occurrencies / b.DocNumber)
+        if good {
+            wordStat.Occurrencies += 1
+        }
+        wordStat.Prob = float64(wordStat.Occurrencies) / float64(b.DocNumber)
         b.Words[word] = wordStat
     }
 
@@ -68,4 +81,16 @@ func filterWords(words []string) []string {
         }
     }
     return res
+}
+
+func (b *BayesClassifier) Classify(text string) float64 {
+    words := filterWords(splitText(text))
+    eta := 0.0
+    for _, word := range words {
+        wordStat, _ := b.Words[word]
+        eta += math.Log(1.0 - wordStat.CorrectedProb()) - math.Log(wordStat.CorrectedProb())
+        fmt.Println(word, " prob: ", wordStat.CorrectedProb())
+    }
+
+    return 1.0 / (1.0 + math.Exp(eta))
 }
